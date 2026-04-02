@@ -104,7 +104,9 @@ class RRFRetrieval(BaseRetriever):
                 results.append({
                     'text': all_docs[idx]['text'],
                     'score': float(scores[idx]),
-                    'metadata': all_docs[idx].get('metadata', {})
+                    'metadata': all_docs[idx].get('metadata', {}),
+                    'document_id': all_docs[idx].get('document_id', ''),
+                    'chunk_index': all_docs[idx].get('chunk_index', 0)
                 })
         
         return results
@@ -137,7 +139,9 @@ class RRFRetrieval(BaseRetriever):
                 if doc_text not in doc_details:
                     doc_details[doc_text] = {
                         'text': doc_text,
-                        'metadata': doc.get('metadata', {})
+                        'metadata': doc.get('metadata', {}),
+                        'document_id': doc.get('document_id', ''),
+                        'chunk_index': doc.get('chunk_index', 0)
                     }
                 
                 # Track sources

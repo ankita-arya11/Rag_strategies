@@ -10,11 +10,28 @@ load_dotenv()
 class QdrantManager:
     """Manager for Qdrant vector database operations"""
     
-    def __init__(self):
-        qdrant_host = os.getenv("QDRANT_HOST", "localhost")
-        qdrant_port = int(os.getenv("QDRANT_PORT", 6333))
+    def __init__(self, mode="server"):
+        """
+        Initialize Qdrant client
         
-        self.client = QdrantClient(host=qdrant_host, port=qdrant_port)
+        Args:
+            mode: "server" (Docker), "memory" (RAM), or "local" (file)
+        """
+        if mode == "memory":
+            # In-memory mode - No Docker needed, data lost on restart
+            print("🧠 Using Qdrant in MEMORY mode (data will be lost on restart)")
+            self.client = QdrantClient(":memory:")
+        elif mode == "local":
+            # Local file storage - No Docker needed, data persists
+            print("📁 Using Qdrant in LOCAL FILE mode")
+            self.client = QdrantClient(path="./qdrant_data")
+        else:
+            # Server mode - Docker required, data persists
+            qdrant_host = os.getenv("QDRANT_HOST", "localhost")
+            qdrant_port = int(os.getenv("QDRANT_PORT", 6333))
+            print(f"🐳 Using Qdrant in SERVER mode ({qdrant_host}:{qdrant_port})")
+            self.client = QdrantClient(host=qdrant_host, port=qdrant_port)
+        
         # OpenAI API key should be set via OPENAI_API_KEY environment variable
         self.embeddings = OpenAIEmbeddings(
             model="text-embedding-3-small"

@@ -1,19 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
+import { useAppContext } from '../context/AppContext';
 import MetricsDisplay from '../components/MetricsDisplay';
 import './RetrievalStrategies.css';
 
 const RetrievalStrategies = () => {
-  const [documents, setDocuments] = useState([]);
-  const [selectedDocument, setSelectedDocument] = useState('');
-  const [query, setQuery] = useState('');
+  const { 
+    documents, 
+    setDocuments,
+    retrievalResults,
+    setRetrievalResults,
+    lastQuery,
+    setLastQuery,
+    selectedDocument,
+    setSelectedDocument,
+    collections,
+    setCollections
+  } = useAppContext();
+  
   const [selectedStrategy, setSelectedStrategy] = useState('hybrid');
   const [topK, setTopK] = useState(5);
-  const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [retrievalMetrics, setRetrievalMetrics] = useState(null);
-  const [collections, setCollections] = useState([]);
 
   const strategies = [
     { value: 'hybrid', label: 'Hybrid Search', description: 'Combines dense vector and sparse BM25 search' },
@@ -22,8 +31,12 @@ const RetrievalStrategies = () => {
   ];
 
   useEffect(() => {
-    loadDocuments();
-    loadCollections();
+    if (documents.length === 0) {
+      loadDocuments();
+    }
+    if (collections.length === 0) {
+      loadCollections();
+    }
   }, []);
 
   const loadDocuments = async () => {
@@ -46,24 +59,24 @@ const RetrievalStrategies = () => {
   };
 
   const handleRetrieve = async () => {
-    if (!query.trim()) {
+    if (!lastQuery.trim()) {
       setError('Please enter a query');
       return;
     }
 
     setLoading(true);
     setError('');
-    setResults([]);
+    setRetrievalResults([]);
 
     try {
       const result = await api.retrieve(
-        query,
+        lastQuery,
         selectedStrategy,
         selectedDocument || null,
         topK
       );
 
-      setResults(result.results);
+      setRetrievalResults(result.results);
       setRetrievalMetrics({
         strategy: selectedStrategy,
         latency: result.latency_ms,
@@ -128,8 +141,8 @@ const RetrievalStrategies = () => {
               <textarea
                 className="input query-input"
                 placeholder="What would you like to know about your documents?"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                value={lastQuery}
+                onChange={(e) => setLastQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
                 rows="4"
               />
@@ -208,7 +221,7 @@ const RetrievalStrategies = () => {
             <button
               className="button"
               onClick={handleRetrieve}
-              disabled={loading || !query.trim()}
+              disabled={loading || !lastQuery.trim()}
               style={{ width: '100%' }}
             >
               {loading ? 'Searching...' : 'Retrieve Results'}
@@ -222,37 +235,44 @@ const RetrievalStrategies = () => {
 
         {/* Right Column: Results */}
         <div>
-          {results.length > 0 && (
+          {retrievalResults.length > 0 && (
             <div className="card">
               <div className="card-header">
                 <span className="card-icon" style={{ fontSize: 'var(--text-xs)' }}>&#128269;</span>
-                Retrieved Results ({results.length})
+                Retrieved Results ({retrievalResults.length})
               </div>
 
               <div className="results-container">
-                {results.map((result, index) => (
+                {retrievalResults.map((result, index) => (
                   <div key={index} className="result-item">
                     <div className="result-header">
                       <span className="result-rank">#{index + 1}</span>
                       <span className="result-score">
                         {result.score.toFixed(4)}
                       </span>
+                      {(result.chunk_index !== undefined || result.metadata?.chunk_index !== undefined) && (
+                        <span className="chunk-index-badge">
+                          Index: {result.chunk_index ?? result.metadata?.chunk_index}
+                        </span>
+                      )}
                     </div>
                     <div className="result-text">
-                      {highlightQuery(result.text, query)}
+                      {highlightQuery(result.text, lastQuery)}
                     </div>
                     {result.document_id && (
                       <div className="result-doc-info">
-                        Doc: {result.document_id} | Chunk #{result.chunk_index}
+                        Doc: {result.document_id}
                       </div>
                     )}
                     {result.metadata && Object.keys(result.metadata).length > 0 && (
                       <div className="result-metadata">
-                        {Object.entries(result.metadata).map(([key, value]) => (
-                          <span key={key} className="metadata-tag">
-                            {key}: {JSON.stringify(value)}
-                          </span>
-                        ))}
+                        {Object.entries(result.metadata)
+                          .filter(([key]) => key !== 'chunk_index')
+                          .map(([key, value]) => (
+                            <span key={key} className="metadata-tag">
+                              {key}: {JSON.stringify(value)}
+                            </span>
+                          ))}
                       </div>
                     )}
                   </div>
@@ -261,7 +281,7 @@ const RetrievalStrategies = () => {
             </div>
           )}
 
-          {!loading && results.length === 0 && (
+          {!loading && retrievalResults.length === 0 && (
             <div className="card">
               <div className="no-results">
                 <div style={{ fontSize: '2.5rem', marginBottom: '1rem', opacity: 0.5 }}>&#128270;</div>

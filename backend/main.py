@@ -39,7 +39,10 @@ app.add_middleware(
 UPLOAD_DIR = Path("data/uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-qdrant_manager = QdrantManager()
+# Qdrant mode: "server" (Docker), "memory" (RAM), or "local" (file)
+# Set via environment variable QDRANT_MODE
+QDRANT_MODE = os.getenv("QDRANT_MODE", "server")
+qdrant_manager = QdrantManager(mode=QDRANT_MODE)
 metrics_tracker = MetricsTracker()
 doc_processor = DocumentProcessor()
 

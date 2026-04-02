@@ -122,6 +122,8 @@ class HybridRetrieval(BaseRetriever):
                     'text': text,
                     'score': normalized_score * self.dense_weight,
                     'metadata': result.get('metadata', {}),
+                    'document_id': result.get('document_id', ''),
+                    'chunk_index': result.get('chunk_index', 0),
                     'sources': ['dense']
                 }
         
@@ -139,6 +141,8 @@ class HybridRetrieval(BaseRetriever):
                     'text': text,
                     'score': normalized_score * self.sparse_weight,
                     'metadata': result.get('metadata', {}),
+                    'document_id': result.get('document_id', ''),
+                    'chunk_index': result.get('chunk_index', 0),
                     'sources': ['sparse']
                 }
         

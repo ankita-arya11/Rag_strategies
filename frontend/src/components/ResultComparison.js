@@ -1,13 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
+import { useAppContext } from '../context/AppContext';
 import './ResultComparison.css';
 
 const ResultComparison = () => {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState({});
+  const { 
+    documents, 
+    setDocuments,
+    comparisonResults,
+    setComparisonResults,
+    lastQuery,
+    setLastQuery,
+    selectedDocument,
+    setSelectedDocument
+  } = useAppContext();
+  
   const [loading, setLoading] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState('');
-  const [documents, setDocuments] = useState([]);
 
   const strategies = ['hybrid', 'cross_encoder', 'rrf'];
 
@@ -18,7 +26,9 @@ const ResultComparison = () => {
   };
 
   useEffect(() => {
-    loadDocuments();
+    if (documents.length === 0) {
+      loadDocuments();
+    }
   }, []);
 
   const loadDocuments = async () => {
@@ -31,7 +41,7 @@ const ResultComparison = () => {
   };
 
   const handleCompare = async () => {
-    if (!query.trim()) {
+    if (!lastQuery.trim()) {
       alert('Please enter a query');
       return;
     }
@@ -41,7 +51,7 @@ const ResultComparison = () => {
 
     try {
       const promises = strategies.map(strategy =>
-        api.retrieve(query, strategy, selectedDocument || null, 5)
+        api.retrieve(lastQuery, strategy, selectedDocument || null, 5)
           .then(result => ({ strategy, result }))
           .catch(error => ({ strategy, error: error.message }))
       );
@@ -52,7 +62,7 @@ const ResultComparison = () => {
         newResults[strategy] = error ? { error } : result;
       });
 
-      setResults(newResults);
+      setComparisonResults(newResults);
     } catch (err) {
       console.error('Comparison failed:', err);
     } finally {
@@ -82,8 +92,8 @@ const ResultComparison = () => {
                 type="text"
                 className="input"
                 placeholder="Enter your query to compare across strategies..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                value={lastQuery}
+                onChange={(e) => setLastQuery(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleCompare()}
               />
             </div>
@@ -108,7 +118,7 @@ const ResultComparison = () => {
           <button
             className="button"
             onClick={handleCompare}
-            disabled={loading || !query.trim()}
+            disabled={loading || !lastQuery.trim()}
             style={{ marginTop: '24px' }}
           >
             {loading ? 'Comparing...' : 'Compare All'}
@@ -116,37 +126,42 @@ const ResultComparison = () => {
         </div>
       </div>
 
-      {Object.keys(results).length > 0 && (
+      {Object.keys(comparisonResults).length > 0 && (
         <div className="comparison-grid">
           {strategies.map(strategy => (
             <div key={strategy} className="strategy-column">
               <div className="strategy-header">
                 <h3>{strategyLabels[strategy] || strategy.replace('_', ' ').toUpperCase()}</h3>
-                {results[strategy] && !results[strategy].error && (
+                {comparisonResults[strategy] && !comparisonResults[strategy].error && (
                   <div className="strategy-metrics">
                     <span className="metric">
-                      {results[strategy].latency_ms.toFixed(0)}ms
+                      {comparisonResults[strategy].latency_ms.toFixed(0)}ms
                     </span>
                     <span className="metric">
-                      {results[strategy].total_results} results
+                      {comparisonResults[strategy].total_results} results
                     </span>
                   </div>
                 )}
               </div>
 
-              {results[strategy]?.error ? (
+              {comparisonResults[strategy]?.error ? (
                 <div className="error-message">
-                  {results[strategy].error}
+                  {comparisonResults[strategy].error}
                 </div>
-              ) : results[strategy]?.results ? (
+              ) : comparisonResults[strategy]?.results ? (
                 <div className="strategy-results">
-                  {results[strategy].results.slice(0, 3).map((result, idx) => (
+                  {comparisonResults[strategy].results.map((result, idx) => (
                     <div key={idx} className="comparison-result">
                       <div>
                         <span className="result-rank">#{idx + 1}</span>
                         <span className="result-score">
                           {result.score.toFixed(4)}
                         </span>
+                        {result.metadata?.chunk_index !== undefined && (
+                          <span className="chunk-index-badge">
+                            Index: {result.metadata.chunk_index}
+                          </span>
+                        )}
                       </div>
                       <div className="result-preview">
                         {result.text.substring(0, 150)}...
@@ -160,7 +175,7 @@ const ResultComparison = () => {
         </div>
       )}
 
-      {Object.keys(results).length > 0 && (
+      {Object.keys(comparisonResults).length > 0 && (
         <div className="card" style={{ marginTop: 'var(--space-6)' }}>
           <div className="card-header">
             <span className="card-icon">&#128200;</span>
@@ -179,7 +194,7 @@ const ResultComparison = () => {
               </thead>
               <tbody>
                 {strategies.map(strategy => {
-                  const data = results[strategy];
+                  const data = comparisonResults[strategy];
                   if (data?.error || !data?.results) return null;
 
                   const avgScore = data.results.length > 0
@@ -187,12 +202,12 @@ const ResultComparison = () => {
                     : 0;
 
                   const isFastest = data.latency_ms === Math.min(...strategies
-                    .filter(s => results[s]?.latency_ms)
-                    .map(s => results[s].latency_ms));
+                    .filter(s => comparisonResults[s]?.latency_ms)
+                    .map(s => comparisonResults[s].latency_ms));
 
                   const isBestScore = avgScore === Math.max(...strategies
-                    .filter(s => results[s]?.results?.length > 0)
-                    .map(s => results[s].results.reduce((sum, r) => sum + r.score, 0) / results[s].results.length));
+                    .filter(s => comparisonResults[s]?.results?.length > 0)
+                    .map(s => comparisonResults[s].results.reduce((sum, r) => sum + r.score, 0) / comparisonResults[s].results.length));
 
                   return (
                     <tr key={strategy}>
