@@ -50,8 +50,7 @@ const RetrievalStrategies = () => {
 
   const loadCollections = async () => {
     try {
-      const response = await fetch('http://localhost:8000/collections');
-      const data = await response.json();
+      const data = await api.getCollections();
       setCollections(data.collections || []);
     } catch (err) {
       console.error('Failed to load collections:', err);

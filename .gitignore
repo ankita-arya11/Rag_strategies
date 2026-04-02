@@ -1,5 +1,10 @@
 # Environment variables
 .env
+frontend/.env
+
+# Ngrok configuration (contains authtoken - DO NOT COMMIT)
+ngrok.yml
+*.ngrok.yml
 
 # Python
 __pycache__/
@@ -9,6 +14,7 @@ __pycache__/
 .Python
 env/
 venv/
+myenv/
 ENV/
 *.egg-info/
 dist/
@@ -38,8 +44,7 @@ build/
 data/uploads/*
 !data/uploads/.gitkeep
 qdrant_storage/
+qdrant_data/
 
 # Logs
 *.log
-
-backend/myenv/

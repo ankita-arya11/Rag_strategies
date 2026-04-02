@@ -33,6 +33,11 @@ const ChunkViewer = ({ chunks }) => {
               <div className="chunk-header">
                 <span className="chunk-number">Chunk #{index + 1}</span>
                 <div className="chunk-stats">
+                  {chunk.chunk_index !== undefined && (
+                    <span className="chunk-index-badge">
+                      Index: {chunk.chunk_index}
+                    </span>
+                  )}
                   <span className="stat-badge">
                     {chunk.char_count} chars
                   </span>

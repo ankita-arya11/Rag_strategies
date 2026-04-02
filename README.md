@@ -74,6 +74,22 @@ That's it! 🎉
 
 ---
 
+## 🌐 Share Your App with Ngrok
+
+Want to share your RAG app with others or access it remotely?
+
+```bash
+# Windows
+start-ngrok.bat
+
+# Mac/Linux
+./start-ngrok.sh
+```
+
+See **[NGROK_SETUP.md](NGROK_SETUP.md)** for complete setup guide.
+
+---
+
 ## 📖 Full Documentation
 
 See **[SETUP_GUIDE.md](SETUP_GUIDE.md)** for:

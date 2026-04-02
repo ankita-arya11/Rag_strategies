@@ -15,10 +15,27 @@ if not exist "venv" (
 REM Activate virtual environment
 call venv\Scripts\activate.bat
 
-REM Install dependencies if needed
+REM Install dependencies if needed (or if uvicorn is missing)
+set "NEEDS_INSTALL=0"
 if not exist "venv\.installed" (
+    set "NEEDS_INSTALL=1"
+) else (
+    python -c "import uvicorn" >nul 2>nul
+    if errorlevel 1 (
+        set "NEEDS_INSTALL=1"
+    )
+)
+
+if "%NEEDS_INSTALL%"=="1" (
     echo Installing dependencies...
     pip install -r requirements.txt
+    if errorlevel 1 (
+        echo.
+        echo [ERROR] Dependency installation failed.
+        echo [TIP] Free up disk space and retry.
+        echo [TIP] You can clear pip cache with: pip cache purge
+        exit /b 1
+    )
     echo. > venv\.installed
 )
 
@@ -35,4 +52,4 @@ echo.
 echo Press Ctrl+C to stop the server
 echo.
 
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000

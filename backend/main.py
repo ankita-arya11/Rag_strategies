@@ -26,9 +26,11 @@ app = FastAPI(
 )
 
 # CORS middleware
+# Allow all origins for ngrok and remote access
+# For production, specify exact origins instead of ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://frontend:3000"],
+    allow_origins=["*"],  # Allows ngrok URLs and all origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -36,7 +38,8 @@ app.add_middleware(
 )
 
 # Initialize components
-UPLOAD_DIR = Path("data/uploads")
+# Use parent directory for data uploads (project root/data/uploads)
+UPLOAD_DIR = Path(__file__).parent.parent / "data" / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 # Qdrant mode: "server" (Docker), "memory" (RAM), or "local" (file)
@@ -267,7 +270,8 @@ async def chunk_document(request: ChunkRequest):
                 "text": chunk["text"],
                 "metadata": chunk.get("metadata", {}),
                 "char_count": len(chunk["text"]),
-                "word_count": len(chunk["text"].split())
+                "word_count": len(chunk["text"].split()),
+                "chunk_index": i
             }
             for i, chunk in enumerate(chunks)
         ]

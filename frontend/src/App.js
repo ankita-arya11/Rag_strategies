@@ -18,7 +18,6 @@ function App() {
                 <div className="nav-logo">R</div>
                 <div>
                   <div className="nav-title">RAG Strategies</div>
-                  {/* <div className="nav-title-sub">Testing Platform</div> */}
                 </div>
               </div>
               <div className="nav-links">

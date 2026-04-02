@@ -17,9 +17,11 @@ class AgenticPropositionChunker(BaseChunker):
     def __init__(self):
         super().__init__()
         # OpenAI API key should be set via OPENAI_API_KEY environment variable
+        # Using gpt-3.5-turbo-16k for larger context window (16k tokens)
         self.llm = ChatOpenAI(
-            model="gpt-3.5-turbo",
-            temperature=0
+            model="gpt-3.5-turbo-16k",
+            temperature=0,
+            max_tokens=4000  # Max tokens for response
         )
         
         self.proposition_prompt = PromptTemplate(
@@ -34,6 +36,8 @@ Text: {text}
 
 Return a JSON array of propositions. Example format:
 ["Proposition 1", "Proposition 2", "Proposition 3"]
+
+Important: Return ONLY the JSON array, no additional text.
 
 Propositions:"""
         )
@@ -53,13 +57,18 @@ Propositions:"""
         3. Group related propositions if they're small
         4. Return propositions as chunks
         """
-        # Split text into segments for processing
-        segments = self._split_into_segments(text, max_segment_size=2000)
+        # Split text into larger segments for processing
+        # Using 12000 chars (~3000 tokens) to maximize context window usage
+        # This reduces API calls significantly (e.g., 163k chars = ~14 calls instead of 82)
+        segments = self._split_into_segments(text, max_segment_size=12000)
         
         all_propositions = []
         
+        print(f"📝 Processing {len(segments)} segments (reduced API calls)")
+        
         for segment_idx, segment in enumerate(segments):
             # Extract propositions using LLM
+            print(f"   Segment {segment_idx + 1}/{len(segments)} ({len(segment)} chars)...")
             try:
                 prompt = self.proposition_prompt.format(text=segment)
                 response = self.llm.invoke(prompt)
@@ -94,25 +103,32 @@ Propositions:"""
         
         return chunks
     
-    def _split_into_segments(self, text: str, max_segment_size: int = 2000) -> List[str]:
-        """Split text into segments for LLM processing"""
-        words = text.split()
+    def _split_into_segments(self, text: str, max_segment_size: int = 12000) -> List[str]:
+        """
+        Split text into segments for LLM processing.
+        Now using larger segments (12k chars ~= 3k tokens) to reduce API calls.
+        
+        For 163k char document: 12k segments = ~14 API calls vs 2k segments = ~82 calls
+        Cost savings: ~83% fewer API calls!
+        """
+        # Split by paragraphs first for better semantic boundaries
+        paragraphs = text.split('\n\n')
         segments = []
         current_segment = []
         current_size = 0
         
-        for word in words:
-            word_size = len(word) + 1  # +1 for space
-            if current_size + word_size > max_segment_size and current_segment:
-                segments.append(" ".join(current_segment))
-                current_segment = [word]
-                current_size = word_size
+        for para in paragraphs:
+            para_size = len(para) + 2  # +2 for \n\n
+            if current_size + para_size > max_segment_size and current_segment:
+                segments.append('\n\n'.join(current_segment))
+                current_segment = [para]
+                current_size = para_size
             else:
-                current_segment.append(word)
-                current_size += word_size
+                current_segment.append(para)
+                current_size += para_size
         
         if current_segment:
-            segments.append(" ".join(current_segment))
+            segments.append('\n\n'.join(current_segment))
         
         return segments
     
