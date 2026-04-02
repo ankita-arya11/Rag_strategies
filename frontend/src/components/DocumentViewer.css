@@ -1,0 +1,39 @@
+.document-content {
+  position: relative;
+  max-height: 300px;
+  overflow: hidden;
+  margin-bottom: var(--space-4);
+}
+
+.document-text {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: var(--leading-relaxed);
+  color: var(--color-neutral-700);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  background-color: var(--color-neutral-50);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  margin: 0;
+  border: 1px solid var(--color-neutral-100);
+}
+
+.fade-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent, var(--color-neutral-0));
+  pointer-events: none;
+}
+
+.document-stats {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-neutral-100);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
