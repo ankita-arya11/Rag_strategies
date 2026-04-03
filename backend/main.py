@@ -445,7 +445,7 @@ if __name__ == "__main__":
     uvicorn.run(
         app, 
         host="0.0.0.0", 
-        port=8000,
+        port=5007,
         timeout_keep_alive=300,  # 5 minutes
         timeout_notify=300,  # 5 minutes
         limit_max_requests=10000,
