@@ -2,16 +2,13 @@ import React, { useState } from 'react';
 import './ChunkViewer.css';
 
 const ChunkViewer = ({ chunks }) => {
-  const [expandedChunks, setExpandedChunks] = useState(new Set());
+  const [expandedChunks, setExpandedChunks] = useState({});
 
   const toggleChunk = (chunkId) => {
-    const newExpanded = new Set(expandedChunks);
-    if (newExpanded.has(chunkId)) {
-      newExpanded.delete(chunkId);
-    } else {
-      newExpanded.add(chunkId);
-    }
-    setExpandedChunks(newExpanded);
+    setExpandedChunks(prev => ({
+      ...prev,
+      [chunkId]: !prev[chunkId]
+    }));
   };
 
   return (
@@ -22,14 +19,14 @@ const ChunkViewer = ({ chunks }) => {
       
       <div className="chunks-container">
         {chunks.map((chunk, index) => {
-          const isExpanded = expandedChunks.has(chunk.id);
+          const isExpanded = expandedChunks[index];
           const shouldTruncate = chunk.text.length > 200;
-          const displayText = isExpanded || !shouldTruncate 
+          const displayText = !shouldTruncate || isExpanded
             ? chunk.text 
             : chunk.text.substring(0, 200) + '...';
 
           return (
-            <div key={chunk.id} className="chunk-item">
+            <div key={index} className="chunk-item">
               <div className="chunk-header">
                 <span className="chunk-number">Chunk #{index + 1}</span>
                 <div className="chunk-stats">
@@ -47,12 +44,14 @@ const ChunkViewer = ({ chunks }) => {
                 </div>
               </div>
               
-              <div className="chunk-text">{displayText}</div>
+              <div className={`chunk-text ${isExpanded ? 'expanded' : ''}`}>
+                {displayText}
+              </div>
               
               {shouldTruncate && (
                 <button
                   className="expand-button"
-                  onClick={() => toggleChunk(chunk.id)}
+                  onClick={() => toggleChunk(index)}
                 >
                   {isExpanded ? 'Show Less' : 'Show More'}
                 </button>
