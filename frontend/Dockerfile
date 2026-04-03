@@ -11,6 +11,6 @@ RUN npm install
 # Copy application files
 COPY . .
 
-EXPOSE 3000
+EXPOSE 5006
 
 CMD ["npm", "start"]
