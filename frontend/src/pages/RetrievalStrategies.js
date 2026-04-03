@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../api';
 import { useAppContext } from '../context/AppContext';
 import MetricsDisplay from '../components/MetricsDisplay';
@@ -30,6 +30,24 @@ const RetrievalStrategies = () => {
     { value: 'rrf', label: 'Reciprocal Rank Fusion (RRF)', description: 'Rank-based fusion of multiple retrieval methods' }
   ];
 
+  const loadDocuments = useCallback(async () => {
+    try {
+      const data = await api.getDocuments();
+      setDocuments(data.documents || []);
+    } catch (err) {
+      setError('Failed to load documents');
+    }
+  }, [setDocuments , collections.length, documents.length, loadCollections]);
+
+  const loadCollections = useCallback(async () => {
+    try {
+      const data = await api.getCollections();
+      setCollections(data.collections || []);
+    } catch (err) {
+      console.error('Failed to load collections:', err);
+    }
+  }, [setCollections]);
+
   useEffect(() => {
     if (documents.length === 0) {
       loadDocuments();
@@ -37,25 +55,7 @@ const RetrievalStrategies = () => {
     if (collections.length === 0) {
       loadCollections();
     }
-  }, []);
-
-  const loadDocuments = async () => {
-    try {
-      const data = await api.getDocuments();
-      setDocuments(data.documents || []);
-    } catch (err) {
-      setError('Failed to load documents');
-    }
-  };
-
-  const loadCollections = async () => {
-    try {
-      const data = await api.getCollections();
-      setCollections(data.collections || []);
-    } catch (err) {
-      console.error('Failed to load collections:', err);
-    }
-  };
+  }, [documents.length, collections.length, loadDocuments, loadCollections]);
 
   const handleRetrieve = async () => {
     if (!lastQuery.trim()) {

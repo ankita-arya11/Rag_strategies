@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../api';
 import { useAppContext } from '../context/AppContext';
 import './ResultComparison.css';
@@ -25,20 +25,20 @@ const ResultComparison = () => {
     rrf: 'RRF'
   };
 
-  useEffect(() => {
-    if (documents.length === 0) {
-      loadDocuments();
-    }
-  }, []);
-
-  const loadDocuments = async () => {
+  const loadDocuments = useCallback(async () => {
     try {
       const data = await api.getDocuments();
       setDocuments(data.documents || []);
     } catch (err) {
       console.error('Failed to load documents');
     }
-  };
+  }, [setDocuments]);
+
+  useEffect(() => {
+    if (documents.length === 0) {
+      loadDocuments();
+    }
+  }, [documents.length, loadDocuments]);
 
   const handleCompare = async () => {
     if (!lastQuery.trim()) {
