@@ -21,7 +21,7 @@ services:
       dockerfile: Dockerfile
     container_name: rag_backend
     ports:
-      - "8000:8000"
+      - "5007:5007"
     environment:
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333
@@ -33,7 +33,7 @@ services:
       - qdrant
     networks:
       - rag_network
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn main:app --host 0.0.0.0 --port 5007 --reload
 
   frontend:
     build:
@@ -41,9 +41,9 @@ services:
       dockerfile: Dockerfile
     container_name: rag_frontend
     ports:
-      - "3000:3000"
+      - "5006:5006"
     environment:
-      - REACT_APP_API_URL=http://localhost:8000
+      - REACT_APP_API_URL=http://localhost:5007
     volumes:
       - ./frontend:/app
       - /app/node_modules
